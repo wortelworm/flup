@@ -26,7 +26,8 @@ fn main() -> Result<()> {
         .unwrap()
         .to_owned();
     let lock_file = home_dir.clone() + "/.dotfiles/flake.lock";
-    let update_script = home_dir + "/.dotfiles/scripts/update.sh";
+    let update_script_dir = home_dir + "/.dotfiles/scripts";
+    let update_script = update_script_dir.clone() + "/update.sh";
 
     let cli: Cli = Cli::parse();
     match cli.command.unwrap_or(Commands::Show) {
@@ -37,11 +38,12 @@ fn main() -> Result<()> {
             println!("Latest input is from {num_days} days ago ({date}).",);
         }
         Commands::Update => {
-            let status = std::process::Command::new(update_script).status()?;
+            let status = std::process::Command::new(update_script)
+                .current_dir(update_script_dir)
+                .status()?;
             println!("Exited with status {}!", status);
         }
     }
 
     Ok(())
 }
-
