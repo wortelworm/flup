@@ -25,17 +25,25 @@ impl Inputs {
         Inputs::from_json(Value::from_str(&content).context("Could not parse flake lock as json")?)
     }
     pub fn from_json(value: Value) -> Result<Inputs> {
+        if value["version"] != Value::Number(serde_json::Number::from(7)) {
+            bail!("Version of flake should be 7, but instead it is '{}'!", value["version"])
+        }
+
+        let rootname = value["root"].as_str().unwrap_or("");
+
         let err = "Failed parsing json";
-        let Value::Object(arr) = &value["nodes"]["root"]["inputs"] else {
+        let Value::Object(inputs) = &value["nodes"] else {
             bail!(err)
         };
 
         let mut root = HashMap::new();
 
-        for (_name, v) in arr {
-            let Value::String(name) = v else { bail!(err) };
+        for (name, v) in inputs {
+            if name == rootname {
+                continue;
+            }
 
-            let Value::Number(number) = &value["nodes"][name]["locked"]["lastModified"] else {
+            let Value::Number(number) = &v["locked"]["lastModified"] else {
                 bail!(err)
             };
 
